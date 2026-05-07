@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>26年大理项目 · 个人信息核验</title>
+    <!-- SheetJS 用于导出 Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', 'Roboto', 'Noto Sans', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #eef2f7 0%, #d9e2ec 100%);
+            min-height: 100vh;
+            padding: 2rem 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .main-card {
+            max-width: 760px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 2.5rem;
+            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #0f2b3d;
+            color: white;
+            padding: 1.8rem 2rem;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+        .header h1::before {
+            content: "🪪";
+            font-size: 1.9rem;
+        }
+        .header p {
+            margin-top: 0.5rem;
+            opacity: 0.85;
+            font-size: 0.85rem;
+        }
+
+        .content {
+            padding: 2rem 1.8rem;
+        }
+
+        .verify-block {
+            background: #f9fbfe;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.8rem;
+            border: 1px solid #e2edf7;
+        }
+        .input-group {
+            margin-bottom: 1rem;
+        }
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            color: #1e3a5f;
+            margin-bottom: 0.4rem;
+            font-size: 0.9rem;
+        }
+        .name-input {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            border: 2px solid #cbdde9;
+            border-radius: 1.2rem;
+            font-size: 1rem;
+            background: white;
+        }
+        .name-input:focus {
+            border-color: #2c7da0;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(44,125,160,0.2);
+        }
+        .verify-btn {
+            background: #2c7da0;
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 0.8rem;
+            border-radius: 1.5rem;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 0.3rem;
+            box-shadow: 0 2px 6px rgba(44,125,160,0.3);
+        }
+        .verify-btn:hover {
+            background: #1f5e7c;
+            transform: scale(0.98);
+        }
+
+        .info-card {
+            background: white;
+            border-radius: 1.2rem;
+            padding: 1rem 1.2rem;
+            margin: 1.2rem 0;
+            border-left: 5px solid #2c7da0;
+        }
+        .info-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 0.6rem 0;
+            border-bottom: 1px dashed #e2edf7;
+            gap: 0.5rem;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            font-weight: 700;
+            color: #2c3e50;
+            min-width: 95px;
+        }
+        .info-input {
+            flex: 2;
+            padding: 0.5rem 0.8rem;
+            border: 1.5px solid #cbdde9;
+            border-radius: 1rem;
+            font-size: 0.9rem;
+            background: #fefcf5;
+        }
+        .info-input:focus {
+            border-color: #2c7da0;
+            outline: none;
+        }
+        .info-input:disabled {
+            background: #f1f3f7;
+            color: #6f8faa;
+        }
+        .save-id-btn {
+            background: #2b7a62;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        .save-id-btn:hover {
+            background: #1f5a48;
+        }
+        .save-id-btn:disabled {
+            background: #9bb5a8;
+            cursor: not-allowed;
+        }
+
+        .remarks-block {
+            background: #ffffff;
+            border-radius: 1.5rem;
+            padding: 1.3rem;
+            border: 1px solid #e2edf7;
+            margin-top: 0.5rem;
+        }
+        .remarks-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1f5e7c;
+            margin-bottom: 1rem;
+            border-left: 4px solid #2c7da0;
+            padding-left: 0.8rem;
+        }
+        .field-group {
+            margin-bottom: 1.2rem;
+        }
+        .field-group label {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 0.4rem;
+            color: #2c3e50;
+        }
+        textarea {
+            width: 100%;
+            padding: 0.7rem 1rem;
+            border: 1.5px solid #dce5ec;
+            border-radius: 1rem;
+            font-size: 0.9rem;
+            background: #fefefe;
+            resize: vertical;
+        }
+        textarea:focus {
+            border-color: #2c7da0;
+            outline: none;
+        }
+        .save-remark-btn {
+            background: #2b7a62;
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 2rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 0.8rem;
+        }
+        .save-remark-btn:hover {
+            background: #1f5a48;
+        }
+        .toast-msg {
+            font-size: 0.75rem;
+            color: #4b6e8a;
+            margin-top: 0.6rem;
+            text-align: center;
+        }
+        .warning-tip {
+            background: #fff7e5;
+            border-left: 4px solid #e6b12e;
+            padding: 0.6rem 1rem;
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+        }
+        footer {
+            text-align: center;
+            font-size: 0.7rem;
+            padding: 1rem;
+            color: #6c88a0;
+            border-top: 1px solid #eef2f8;
+        }
+        .hidden-trigger {
+            cursor: pointer;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            max-width: 550px;
+            width: 90%;
+            border-radius: 2rem;
+            padding: 1.8rem;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.3);
+        }
+        .modal-content h3 {
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+            color: #0f2b3d;
+        }
+        .file-label-modal {
+            background: #eef2fa;
+            border: 1px dashed #2c7da0;
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            cursor: pointer;
+            margin: 0.5rem 0;
+        }
+        .modal-close {
+            background: #8b5a2b;
+            color: white;
+            border: none;
+            padding: 0.4rem 1rem;
+            border-radius: 2rem;
+            margin-top: 1rem;
+            cursor: pointer;
+            margin-right: 0.5rem;
+        }
+        .preview-list {
+            max-height: 200px;
+            overflow-y: auto;
+            background: #f8fafc;
+            border-radius: 1rem;
+            padding: 0.5rem;
+            font-size: 0.75rem;
+            margin: 1rem 0;
+        }
+        .admin-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            margin-top: 1rem;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            margin-top: 0.5rem;
+        }
+        @media (max-width: 550px) {
+            .content { padding: 1.5rem; }
+            .info-row { flex-direction: column; align-items: flex-start; }
+            .info-input { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-card">
+    <div class="header hidden-trigger" id="adminTriggerTitle">
+        <h1>📋 26年大理项目 · 个人信息核验</h1>
+        <p>输入姓名，核对身份信息并填写健康备注（过敏原/特殊事项）</p>
+        <small style="font-size:0.7rem;">🔒 仅显示本人信息 | 身份信息可修正并保存</small>
+    </div>
+
+    <div class="content">
+        <div class="verify-block">
+            <div class="input-group">
+                <label>📛 您的姓名</label>
+                <input type="text" id="fullNameInput" class="name-input" placeholder="请输入与档案一致的姓名" autocomplete="off">
+            </div>
+            <button id="verifyIdentityBtn" class="verify-btn">✓ 验证身份</button>
+            <div class="warning-tip" style="margin-top: 12px;">
+                💡 提示：验证通过后可查看并编辑身份证号/性别，点击下方「确认并保存身份信息」即可更新档案。
+            </div>
+        </div>
+
+        <div id="identityDisplayArea" style="display: none;">
+            <div class="info-card">
+                <div class="info-row">
+                    <span class="info-label">🆔 身份证号</span>
+                    <input type="text" id="idCardInput" class="info-input" placeholder="18位身份证号码" disabled>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">⚥ 性别</span>
+                    <input type="text" id="genderInput" class="info-input" placeholder="男 / 女" disabled>
+                </div>
+                <div class="button-group">
+                    <button id="saveIdentityBtn" class="save-id-btn" disabled>✅ 确认并保存身份信息</button>
+                </div>
+                <div class="toast-msg" id="identityToast"></div>
+            </div>
+        </div>
+
+        <div class="remarks-block" id="remarksBlock">
+            <div class="remarks-title">📝 健康与特殊备注</div>
+            <div class="field-group">
+                <label>🌿 过敏原信息（填写已知过敏原）</label>
+                <textarea id="allergyInput" rows="2" placeholder="例如：青霉素、花粉、海鲜、坚果……" disabled></textarea>
+            </div>
+            <div class="field-group">
+                <label>📌 特殊备注事项</label>
+                <textarea id="specialNoteInput" rows="2" placeholder="例如：需要轮椅服务、素食、紧急联系人备注等" disabled></textarea>
+            </div>
+            <button id="saveRemarksBtn" class="save-remark-btn" disabled>💾 保存我的备注</button>
+            <div class="toast-msg" id="remarkToastMsg"></div>
+            <div id="needVerifyHint" style="font-size:0.75rem; color:#c2410c; text-align:center; margin-top:0.5rem;">
+                ⚠️ 请先验证身份，验证通过后可填写并保存备注
+            </div>
+        </div>
+    </div>
+    <footer>🔐 本系统仅向验证成功的本人展示身份信息 | 可修正个人信息（管理员可导出/导入全部数据）</footer>
+</div>
+
+<!-- 后台管理模态窗（连续点击标题5次打开） -->
+<div id="adminModal" class="modal">
+    <div class="modal-content">
+        <h3>📁 后台数据管理（仅管理员）</h3>
+        <p>导入用户基础信息（姓名、身份证号、性别）。<br>
+        <strong>注意：新导入的数据将完全替换现有的用户数据库</strong>（旧名单及对应的备注将被清除，只保留新名单中用户的备注）。<br>
+        支持 JSON 格式: <code>[{"name":"张三","idCard":"410...","gender":"男"}, ...]</code></p>
+        <label class="file-label-modal">
+            📂 选择 JSON 文件 (.json)
+            <input type="file" id="adminImportFile" accept=".json" style="display:none;">
+        </label>
+        <button id="triggerFileBtn" class="file-label-modal" style="background:#e2e8f0;">选择文件</button>
+        <div id="importPreview" class="preview-list">等待导入...</div>
+        <div class="admin-buttons">
+            <button id="exportDataAdminBtn" class="modal-close" style="background:#2c7da0;">📎 导出全部数据 (Excel)</button>
+            <div>
+                <button id="resetDefaultDataBtn" class="modal-close" style="background:#41644a;">重置默认测试数据</button>
+                <button id="closeModalBtn" class="modal-close">关闭</button>
+            </div>
+        </div>
+        <p style="margin-top:12px; font-size:0.7rem;">⚠️ 导入/重置后当前验证会话将自动失效，请重新验证身份。</p>
+    </div>
+</div>
+
+<script>
+    // ---------- 数据架构 ----------
+    let userDatabase = [];      // { name, idCard, gender }
+    let remarksStore = {};      // { "姓名": { allergy, specialNote } }
+
+    // DOM 元素
+    const fullNameInput = document.getElementById('fullNameInput');
+    const verifyBtn = document.getElementById('verifyIdentityBtn');
+    const identityArea = document.getElementById('identityDisplayArea');
+    const idCardInput = document.getElementById('idCardInput');
+    const genderInput = document.getElementById('genderInput');
+    const saveIdentityBtn = document.getElementById('saveIdentityBtn');
+    const allergyInput = document.getElementById('allergyInput');
+    const specialNoteInput = document.getElementById('specialNoteInput');
+    const saveRemarksBtn = document.getElementById('saveRemarksBtn');
+    const remarkToastMsg = document.getElementById('remarkToastMsg');
+    const needVerifyHint = document.getElementById('needVerifyHint');
+    const identityToast = document.getElementById('identityToast');
+
+    let currentVerifiedName = null;
+
+    // ---------- 持久化 ----------
+    function persistUserDatabase() {
+        localStorage.setItem('secure_user_db', JSON.stringify(userDatabase));
+    }
+    function persistRemarksStore() {
+        localStorage.setItem('userHealthRemarks', JSON.stringify(remarksStore));
+    }
+
+    // 完全替换用户数据库（旧数据将被丢弃）
+    function replaceUserDatabase(newUsersArray) {
+        if (!Array.isArray(newUsersArray)) return false;
+        const uniqueMap = new Map();
+        for (const user of newUsersArray) {
+            if (user && user.name && user.idCard && user.gender) {
+                const nameKey = user.name.trim();
+                if (!uniqueMap.has(nameKey)) {
+                    uniqueMap.set(nameKey, {
+                        name: nameKey,
+                        idCard: user.idCard.trim(),
+                        gender: user.gender.trim()
+                    });
+                }
+            }
+        }
+        userDatabase = Array.from(uniqueMap.values());
+        persistUserDatabase();
+        return true;
+    }
+
+    // 清理备注：只保留当前 userDatabase 中存在的用户的备注，其余删除
+    function cleanRemarksByDatabase() {
+        const validNames = new Set(userDatabase.map(u => u.name));
+        const newRemarks = {};
+        for (const [name, remark] of Object.entries(remarksStore)) {
+            if (validNames.has(name)) {
+                newRemarks[name] = remark;
+            }
+        }
+        remarksStore = newRemarks;
+        persistRemarksStore();
+    }
+
+    // 完全重置系统：新用户库 + 清无关备注
+    function resetFullDatabase(newUsersArray) {
+        const success = replaceUserDatabase(newUsersArray);
+        if (success) {
+            cleanRemarksByDatabase();   // 移除不存在于新库中的备注
+        }
+        return success;
+    }
+
+    // 加载初始数据
+    function loadStoredData() {
+        const storedUsers = localStorage.getItem('secure_user_db');
+        if (storedUsers) {
+            try {
+                const parsed = JSON.parse(storedUsers);
+                if (Array.isArray(parsed)) {
+                    userDatabase = parsed.filter(u => u && u.name && u.idCard && u.gender);
+                } else throw new Error();
+            } catch(e) { setDefaultUserDatabase(); }
+        } else {
+            setDefaultUserDatabase();
+        }
+
+        const storedRemarks = localStorage.getItem('userHealthRemarks');
+        if (storedRemarks) {
+            try {
+                remarksStore = JSON.parse(storedRemarks);
+            } catch(e) { remarksStore = {}; }
+        } else {
+            remarksStore = {};
+        }
+        // 确保备注与数据库同步
+        cleanRemarksByDatabase();
+    }
+
+    // 默认测试数据
+    function setDefaultUserDatabase() {
+        userDatabase = [
+            { name: "张敏怡", idCard: "410***************0023", gender: "女" },
+            { name: "李冠杰", idCard: "210***************5512", gender: "男" },
+            { name: "王丽华", idCard: "330***************872X", gender: "女" },
+            { name: "陈思远", idCard: "440***************3345", gender: "男" },
+            { name: "欧阳若曦", idCard: "510***************6658", gender: "女" }
+        ];
+        persistUserDatabase();
+    }
+
+    // 重置到默认（完全替换，清空无关备注）
+    function resetToDefault() {
+        setDefaultUserDatabase();
+        // 清理备注库：只保留默认用户中存在的备注（实际备注库中可能有旧备注，但默认用户可能没有，所以会清除）
+        cleanRemarksByDatabase();
+        // 清空当前验证会话
+        clearIdentityAndRemarks();
+        currentVerifiedName = null;
+    }
+
+    // 清除界面身份显示
+    function clearIdentityAndRemarks() {
+        identityArea.style.display = 'none';
+        idCardInput.disabled = true;
+        genderInput.disabled = true;
+        saveIdentityBtn.disabled = true;
+        allergyInput.disabled = true;
+        specialNoteInput.disabled = true;
+        saveRemarksBtn.disabled = true;
+        needVerifyHint.style.display = 'block';
+        allergyInput.value = '';
+        specialNoteInput.value = '';
+        idCardInput.value = '';
+        genderInput.value = '';
+        currentVerifiedName = null;
+        identityToast.innerText = '';
+        remarkToastMsg.innerText = '';
+    }
+
+    function enableEditForVerifiedUser(user) {
+        idCardInput.value = user.idCard;
+        genderInput.value = user.gender;
+        idCardInput.disabled = false;
+        genderInput.disabled = false;
+        saveIdentityBtn.disabled = false;
+        identityArea.style.display = 'block';
+
+        const notes = remarksStore[user.name] || { allergy: '', specialNote: '' };
+        allergyInput.value = notes.allergy || '';
+        specialNoteInput.value = notes.specialNote || '';
+        allergyInput.disabled = false;
+        specialNoteInput.disabled = false;
+        saveRemarksBtn.disabled = false;
+        needVerifyHint.style.display = 'none';
+    }
+
+    function saveIdentityCorrection() {
+        if (!currentVerifiedName) {
+            identityToast.innerText = '❓ 未验证身份，无法保存';
+            setTimeout(() => identityToast.innerText = '', 1500);
+            return;
+        }
+        const newIdCard = idCardInput.value.trim();
+        const newGender = genderInput.value.trim();
+        if (!newIdCard || !newGender) {
+            identityToast.innerText = '⚠️ 身份证号和性别不能为空';
+            setTimeout(() => identityToast.innerText = '', 1500);
+            return;
+        }
+        const index = userDatabase.findIndex(u => u.name === currentVerifiedName);
+        if (index !== -1) {
+            userDatabase[index].idCard = newIdCard;
+            userDatabase[index].gender = newGender;
+            persistUserDatabase();
+            identityToast.innerText = '✅ 身份信息已更新并保存';
+            setTimeout(() => identityToast.innerText = '', 1800);
+        } else {
+            identityToast.innerText = '❌ 用户不存在于数据库，请重新验证';
+        }
+    }
+
+    function saveCurrentRemarks() {
+        if (!currentVerifiedName) {
+            remarkToastMsg.innerText = '❓ 未验证身份，无法保存备注';
+            setTimeout(() => remarkToastMsg.innerText = '', 1500);
+            return;
+        }
+        if (!remarksStore[currentVerifiedName]) {
+            remarksStore[currentVerifiedName] = { allergy: '', specialNote: '' };
+        }
+        remarksStore[currentVerifiedName].allergy = allergyInput.value;
+        remarksStore[currentVerifiedName].specialNote = specialNoteInput.value;
+        persistRemarksStore();
+        remarkToastMsg.innerText = '✓ 备注已保存成功';
+        remarkToastMsg.style.color = '#2b7a62';
+        setTimeout(() => remarkToastMsg.innerText = '', 1800);
+    }
+
+    function verifyIdentity() {
+        let rawName = fullNameInput.value;
+        if (!rawName || rawName.trim() === "") {
+            remarkToastMsg.innerText = '⚠️ 请输入姓名';
+            remarkToastMsg.style.color = '#b91c1c';
+            setTimeout(() => remarkToastMsg.innerText = '', 1500);
+            clearIdentityAndRemarks();
+            return false;
+        }
+        const trimmedName = rawName.trim();
+        const matchedUser = userDatabase.find(u => u.name === trimmedName);
+        if (matchedUser) {
+            currentVerifiedName = matchedUser.name;
+            enableEditForVerifiedUser(matchedUser);
+            remarkToastMsg.innerText = `✅ 验证成功，欢迎 ${currentVerifiedName}`;
+            remarkToastMsg.style.color = '#2b7a62';
+            setTimeout(() => remarkToastMsg.innerText = '', 2000);
+            return true;
+        } else {
+            remarkToastMsg.innerText = `❌ 未找到“${trimmedName}”的信息，请核对姓名`;
+            remarkToastMsg.style.color = '#b91c1c';
+            clearIdentityAndRemarks();
+            setTimeout(() => remarkToastMsg.innerText = '', 2500);
+            return false;
+        }
+    }
+
+    // 导出 Excel
+    function exportToExcel() {
+        const exportData = [];
+        for (const user of userDatabase) {
+            const remarks = remarksStore[user.name] || { allergy: '', specialNote: '' };
+            exportData.push({
+                "姓名": user.name,
+                "身份证号": user.idCard,
+                "性别": user.gender,
+                "过敏原信息": remarks.allergy || '',
+                "特殊备注事项": remarks.specialNote || ''
+            });
+        }
+        if (exportData.length === 0) {
+            showModalToast("⚠️ 暂无用户数据可导出", true);
+            return;
+        }
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "大理项目人员信息");
+        XLSX.writeFile(workbook, `大理项目_人员信息_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.xlsx`);
+        showModalToast("✅ 导出成功，文件开始下载", false);
+    }
+
+    // ---------- 后台管理模态窗 ----------
+    let adminModal = document.getElementById('adminModal');
+    let triggerFileBtn = document.getElementById('triggerFileBtn');
+    let adminImportFile = document.getElementById('adminImportFile');
+    let closeModalBtn = document.getElementById('closeModalBtn');
+    let resetDefaultBtn = document.getElementById('resetDefaultDataBtn');
+    let exportDataAdminBtn = document.getElementById('exportDataAdminBtn');
+    let importPreviewDiv = document.getElementById('importPreview');
+
+    let clickCount = 0, clickTimer = null;
+    const titleElement = document.getElementById('adminTriggerTitle');
+    titleElement.addEventListener('click', (e) => {
+        clickCount++;
+        if (clickTimer) clearTimeout(clickTimer);
+        clickTimer = setTimeout(() => { clickCount = 0; }, 600);
+        if (clickCount >= 5) {
+            clickCount = 0;
+            adminModal.style.display = 'flex';
+        }
+    });
+
+    function closeModal() { adminModal.style.display = 'none'; }
+    function showModalToast(msg, isError = false) {
+        importPreviewDiv.innerHTML = `<span style="color:${isError ? '#c72a2a' : '#2b7a62'}">${msg}</span>`;
+        setTimeout(() => {
+            if (importPreviewDiv.innerHTML.includes(msg)) importPreviewDiv.innerHTML = '等待导入...';
+        }, 2500);
+    }
+
+    function importJSONFile(file) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            try {
+                const jsonData = JSON.parse(evt.target.result);
+                if (!Array.isArray(jsonData)) throw new Error("JSON 必须是数组格式");
+                let validUsers = [];
+                for (let item of jsonData) {
+                    if (item.name && item.idCard && item.gender) {
+                        validUsers.push({
+                            name: String(item.name).trim(),
+                            idCard: String(item.idCard).trim(),
+                            gender: String(item.gender).trim()
+                        });
+                    } else {
+                        console.warn("跳过无效条目", item);
+                    }
+                }
+                if (validUsers.length === 0) throw new Error("未检测到有效用户数据");
+
+                // 关键：完全替换数据库，并清理旧备注
+                const success = resetFullDatabase(validUsers);
+                if (success) {
+                    importPreviewDiv.innerHTML = `✅ 导入成功！已替换原有数据库，共 ${validUsers.length} 位用户。旧备注已自动清理。`;
+                    // 清除当前验证状态
+                    clearIdentityAndRemarks();
+                    currentVerifiedName = null;
+                    // 如果当前输入框有姓名且验证状态失效，显示提示
+                    remarkToastMsg.innerText = '📌 数据库已更新，请重新验证身份';
+                    setTimeout(() => remarkToastMsg.innerText = '', 2000);
+                } else {
+                    importPreviewDiv.innerHTML = `❌ 导入失败，数据库未变更。`;
+                }
+                setTimeout(() => {
+                    if (importPreviewDiv.innerHTML.includes("导入成功") || importPreviewDiv.innerHTML.includes("导入失败"))
+                        importPreviewDiv.innerHTML = "等待导入...";
+                }, 3000);
+            } catch(err) {
+                importPreviewDiv.innerHTML = `❌ 解析错误: ${err.message}`;
+                console.error(err);
+            }
+        };
+        reader.onerror = () => { importPreviewDiv.innerHTML = "文件读取失败"; };
+        reader.readAsText(file, "UTF-8");
+    }
+
+    triggerFileBtn.addEventListener('click', () => { adminImportFile.click(); });
+    adminImportFile.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) importJSONFile(e.target.files[0]);
+        adminImportFile.value = '';
+    });
+    closeModalBtn.addEventListener('click', closeModal);
+    resetDefaultBtn.addEventListener('click', () => {
+        resetToDefault();
+        showModalToast("已重置为默认测试数据（原有备注已清理）", false);
+        clearIdentityAndRemarks();
+        currentVerifiedName = null;
+        closeModal();
+    });
+    exportDataAdminBtn.addEventListener('click', () => {
+        exportToExcel();
+    });
+    window.onclick = (e) => { if (e.target === adminModal) closeModal(); };
+
+    // 事件绑定
+    verifyBtn.addEventListener('click', verifyIdentity);
+    fullNameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') verifyIdentity(); });
+    saveIdentityBtn.addEventListener('click', saveIdentityCorrection);
+    saveRemarksBtn.addEventListener('click', saveCurrentRemarks);
+
+    // 初始化
+    loadStoredData();
+    clearIdentityAndRemarks();
+</script>
+</body>
+</html>
